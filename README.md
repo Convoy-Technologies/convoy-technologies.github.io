@@ -8,7 +8,7 @@
 
 Please add some info here...
 
-### Firmware (latest)
+### Automatic nightly firmware releases
 
 - [t31_lite_convoy-nor.tgz](https://github.com/Convoy-Technologies/convoy-technologies.github.io/releases/download/latest/t31_lite_convoy-nor.tgz)
 - [t31_lite_gsglobal-nor.tgz](https://github.com/Convoy-Technologies/convoy-technologies.github.io/releases/download/latest/t31_lite_gsglobal-nor.tgz)
