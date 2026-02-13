@@ -6,10 +6,10 @@
 
 ## Convoy-Technologies 
 
-Some info here
+Please add some info here...
 
-### Firmware
+### Firmware (latest)
 
-- A
-- B
-- C
+- [t31_lite_convoy-nor.tgz](https://github.com/Convoy-Technologies/convoy-technologies.github.io/releases/download/latest/t31_lite_convoy-nor.tgz)
+- [t31_lite_gsglobal-nor.tgz](https://github.com/Convoy-Technologies/convoy-technologies.github.io/releases/download/latest/t31_lite_gsglobal-nor.tgz)
+
