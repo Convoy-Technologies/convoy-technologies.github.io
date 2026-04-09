@@ -1,0 +1,96 @@
+name: Auto-update README with Firmware Releases
+
+on:
+  release:
+    types: [published, edited, deleted]
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate and update README
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const { owner, repo } = context.repo;
+
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              {
+                owner,
+                repo,
+                per_page: 100
+              }
+            );
+
+            const latestMap = {};
+
+            for (const release of releases) {
+              const tag = release.tag_name || '';
+
+              if (!tag.endsWith('-latest')) continue;
+              if (!release.assets || release.assets.length === 0) continue;
+
+              const base = tag.slice(0, -'-latest'.length);
+              const lastDash = base.lastIndexOf('-');
+              if (lastDash === -1) continue;
+
+              const branch = base.slice(0, lastDash);
+              const device = base.slice(lastDash + 1);
+
+              if (!branch || !device) continue;
+
+              if (!latestMap[branch]) latestMap[branch] = {};
+              latestMap[branch][device] = release.assets[0].browser_download_url;
+            }
+
+            let body = '## Automatic Firmware Releases\n\n';
+
+            const branches = Object.keys(latestMap).sort();
+            if (branches.length === 0) {
+              body += '_No firmware releases found._\n';
+            } else {
+              for (const branch of branches) {
+                body += `### ${branch} Branch\n\n`;
+                for (const device of Object.keys(latestMap[branch]).sort()) {
+                  const url = latestMap[branch][device];
+                  body += `- [${device}](${url})\n`;
+                }
+                body += '\n';
+              }
+            }
+
+            const readmePath = path.join(process.env.GITHUB_WORKSPACE, 'README.md');
+            let readme = fs.existsSync(readmePath)
+              ? fs.readFileSync(readmePath, 'utf8')
+              : '';
+
+            const markerRegex = /## Automatic Firmware Releases[\s\S]*$/m;
+            if (markerRegex.test(readme)) {
+              readme = readme.replace(markerRegex, body.trimEnd());
+            } else {
+              readme = readme.trimEnd() + '\n\n' + body.trimEnd() + '\n';
+            }
+
+            fs.writeFileSync(readmePath, readme);
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Auto-update firmware release list"
+          git push
